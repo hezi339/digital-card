@@ -27,6 +27,12 @@
             padding: 28px 24px;
             text-align: center;
         }
+        .badge {
+            font-size: 11px;
+            letter-spacing: 0.15em;
+            opacity: 0.85;
+            margin-bottom: 10px;
+        }
         .avatar {
             width: 72px;
             height: 72px;
@@ -59,7 +65,7 @@
         }
         .row:last-child { border-bottom: none; }
         .label {
-            width: 72px;
+            width: 84px;
             color: #757575;
             flex-shrink: 0;
         }
@@ -67,6 +73,12 @@
             flex: 1;
             color: #212121;
             word-break: break-all;
+        }
+        .section-label {
+            color: #757575;
+            font-size: 13px;
+            margin-bottom: 6px;
+            font-weight: 600;
         }
         .bio {
             line-height: 1.6;
@@ -76,6 +88,9 @@
             padding: 12px;
             background: #f5f5f5;
             border-radius: 8px;
+        }
+        .section-block {
+            margin-bottom: 14px;
         }
         .empty-tip {
             text-align: center;
@@ -94,12 +109,17 @@
 <body>
 <div class="card" id="card" style="display:none;">
     <div class="header">
-        <div class="avatar">👤</div>
+        <div class="badge" id="purposeBadge"></div>
+        <div class="avatar" id="avatarEmoji">👤</div>
         <div class="name" id="name">—</div>
         <div class="title" id="title"></div>
         <div class="company" id="company"></div>
     </div>
     <div class="body">
+        <div class="row" id="rowQq" style="display:none;">
+            <span class="label">QQ</span>
+            <span class="value" id="qq"></span>
+        </div>
         <div class="row" id="rowPhone" style="display:none;">
             <span class="label">电话</span>
             <a class="value" id="phone" href="#"></a>
@@ -108,14 +128,42 @@
             <span class="label">邮箱</span>
             <a class="value" id="email" href="#"></a>
         </div>
-        <div id="bioWrap" style="display:none;">
-            <div class="label" style="margin-bottom:6px;">简介</div>
+        <div class="section-block" id="skillsWrap" style="display:none;">
+            <div class="section-label" id="skillsLabel">技能标签</div>
+            <div class="bio" id="skills"></div>
+        </div>
+        <div class="section-block" id="resumeWrap" style="display:none;">
+            <div class="section-label">在线简历</div>
+            <a class="bio value" id="resume" href="#" target="_blank" rel="noopener"></a>
+        </div>
+        <div class="section-block" id="interestsWrap" style="display:none;">
+            <div class="section-label" id="interestsLabel">兴趣</div>
+            <div class="bio" id="interests"></div>
+        </div>
+        <div class="section-block" id="portfolioWrap" style="display:none;">
+            <div class="section-label">作品集</div>
+            <a class="bio value" id="portfolio" href="#" target="_blank" rel="noopener"></a>
+        </div>
+        <div class="section-block" id="watchingAnimeWrap" style="display:none;">
+            <div class="section-label">📺 在追番剧</div>
+            <div class="bio" id="watchingAnime"></div>
+        </div>
+        <div class="section-block" id="playingGamesWrap" style="display:none;">
+            <div class="section-label">🎮 最近在玩</div>
+            <div class="bio" id="playingGames"></div>
+        </div>
+        <div class="section-block" id="favoriteWrap" style="display:none;">
+            <div class="section-label">💖 本命 / 推</div>
+            <div class="bio" id="favoriteCharacter"></div>
+        </div>
+        <div class="section-block" id="bioWrap" style="display:none;">
+            <div class="section-label" id="bioLabel">简介</div>
             <div class="bio" id="bio"></div>
         </div>
     </div>
 </div>
 <div class="empty-tip" id="emptyTip" style="display:none;">暂无名片信息</div>
-<div class="footer">个人数字名片 · 微信扫码查看</div>
+<div class="footer" id="footerText">个人数字名片 · 微信扫码查看</div>
 
 <script>
     function getParam(key) {
@@ -124,14 +172,94 @@
         return value ? decodeURIComponent(value.replace(/\+/g, ' ')) : '';
     }
 
-    function setText(id, text) {
-        var el = document.getElementById(id);
-        if (el && text) {
-            el.textContent = text;
-            el.style.display = text ? '' : 'none';
-        }
-        return !!text;
+    function formatTags(text) {
+        if (!text) return '';
+        return text.split(/[,，、]/).map(function(item) {
+            return item.trim();
+        }).filter(Boolean).join(' · ');
     }
+
+    function showBlock(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'block';
+    }
+
+    function hideBlock(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    }
+
+    function setTextContent(id, text) {
+        var el = document.getElementById(id);
+        if (!el || !text) return false;
+        el.textContent = text;
+        return true;
+    }
+
+    function setLink(id, text) {
+        if (!setTextContent(id, text)) return false;
+        var el = document.getElementById(id);
+        var url = text.indexOf('http') === 0 ? text : 'https://' + text;
+        el.href = url;
+        return true;
+    }
+
+    var purposeThemes = {
+        general: {
+            gradient: 'linear-gradient(135deg, #1565C0 0%, #42A5F5 100%)',
+            badge: '通用名片',
+            avatar: '👤',
+            companyPrefix: '',
+            bioLabel: '简介',
+            interestsLabel: '兴趣',
+            footer: '个人数字名片 · 微信扫码查看'
+        },
+        job: {
+            gradient: 'linear-gradient(135deg, #1A237E 0%, #283593 100%)',
+            badge: '求职名片',
+            avatar: '💼',
+            companyPrefix: '期望：',
+            bioLabel: '项目亮点',
+            interestsLabel: '兴趣',
+            footer: '求职名片 · 扫码查看联系与技能'
+        },
+        social: {
+            gradient: 'linear-gradient(135deg, #FF7043 0%, #FFAB91 100%)',
+            badge: '社交名片',
+            avatar: '🤝',
+            companyPrefix: '',
+            bioLabel: '自我介绍',
+            interestsLabel: '兴趣爱好',
+            footer: '社交名片 · 扫码交友'
+        },
+        academic: {
+            gradient: 'linear-gradient(135deg, #616161 0%, #9E9E9E 100%)',
+            badge: '学术名片',
+            avatar: '🎓',
+            companyPrefix: '机构：',
+            bioLabel: '研究方向',
+            interestsLabel: '兴趣',
+            footer: '学术名片 · 扫码学术交流'
+        },
+        art: {
+            gradient: 'linear-gradient(135deg, #6A1B9A 0%, #EC407A 100%)',
+            badge: '艺术名片',
+            avatar: '🎨',
+            companyPrefix: '',
+            bioLabel: '创作理念',
+            interestsLabel: '风格关键词',
+            footer: '艺术名片 · 扫码查看作品'
+        },
+        anime: {
+            gradient: 'linear-gradient(135deg, #7B1FA2 0%, #E91E63 100%)',
+            badge: '二次元名片',
+            avatar: '✨',
+            companyPrefix: '',
+            bioLabel: '自我介绍',
+            interestsLabel: '兴趣',
+            footer: '二次元名片 · 扫码同好交流'
+        }
+    };
 
     var name = getParam('name');
     var title = getParam('title');
@@ -139,34 +267,99 @@
     var email = getParam('email');
     var company = getParam('company');
     var bio = getParam('bio');
+    var interests = getParam('interests');
+    var portfolio = getParam('portfolio');
+    var skills = getParam('skills');
+    var resume = getParam('resume');
+    var watchingAnime = getParam('watchingAnime');
+    var playingGames = getParam('playingGames');
+    var favoriteCharacter = getParam('favoriteCharacter');
+    var qq = getParam('qq');
+    var purpose = getParam('purpose') || 'general';
+    var theme = purposeThemes[purpose] || purposeThemes.general;
 
-    var hasContent = name || title || phone || email || company || bio;
+    var hasContent = name || title || phone || email || company || bio || interests
+        || portfolio || skills || resume || watchingAnime || playingGames || favoriteCharacter || qq;
+
+    document.body.style.background = theme.gradient;
+    document.querySelector('.header').style.background = theme.gradient;
+    document.getElementById('purposeBadge').textContent = theme.badge;
+    document.getElementById('avatarEmoji').textContent = theme.avatar;
+    document.getElementById('bioLabel').textContent = theme.bioLabel;
+    document.getElementById('interestsLabel').textContent = theme.interestsLabel;
+    document.getElementById('footerText').textContent = theme.footer;
 
     if (!hasContent) {
         document.getElementById('emptyTip').style.display = 'block';
     } else {
         document.getElementById('card').style.display = 'block';
-        document.getElementById('name').textContent = name || '未填写姓名';
-        setText('title', title);
-        setText('company', company);
+        document.getElementById('name').textContent = name || (purpose === 'anime' ? '未填写圈名' : '未填写姓名');
 
+        if (title) {
+            document.getElementById('title').textContent = purpose === 'anime' ? ('自我标签：' + title) : title;
+            document.getElementById('title').style.display = '';
+        }
+        if (company && purpose !== 'social' && purpose !== 'anime') {
+            var companyText = theme.companyPrefix ? theme.companyPrefix + company : company;
+            document.getElementById('company').textContent = companyText;
+            document.getElementById('company').style.display = '';
+        }
+
+        if (qq) {
+            showBlock('rowQq');
+            document.getElementById('qq').textContent = qq;
+        }
         if (phone) {
-            document.getElementById('rowPhone').style.display = 'flex';
+            showBlock('rowPhone');
             var phoneEl = document.getElementById('phone');
             phoneEl.textContent = phone;
             phoneEl.href = 'tel:' + phone;
         }
         if (email) {
-            document.getElementById('rowEmail').style.display = 'flex';
+            showBlock('rowEmail');
             var emailEl = document.getElementById('email');
             emailEl.textContent = email;
             emailEl.href = 'mailto:' + email;
         }
+
+        if (skills) {
+            showBlock('skillsWrap');
+            document.getElementById('skills').textContent = formatTags(skills);
+        }
+        if (resume) {
+            showBlock('resumeWrap');
+            setLink('resume', resume);
+        }
+
+        if (interests) {
+            showBlock('interestsWrap');
+            document.getElementById('interests').textContent = formatTags(interests);
+        }
+
+        if (portfolio) {
+            showBlock('portfolioWrap');
+            setLink('portfolio', portfolio);
+        }
+
+        if (watchingAnime) {
+            showBlock('watchingAnimeWrap');
+            document.getElementById('watchingAnime').textContent = formatTags(watchingAnime);
+        }
+        if (playingGames) {
+            showBlock('playingGamesWrap');
+            document.getElementById('playingGames').textContent = formatTags(playingGames);
+        }
+        if (favoriteCharacter) {
+            showBlock('favoriteWrap');
+            document.getElementById('favoriteCharacter').textContent = favoriteCharacter;
+        }
+
         if (bio) {
-            document.getElementById('bioWrap').style.display = 'block';
+            showBlock('bioWrap');
             document.getElementById('bio').textContent = bio;
         }
-        document.title = (name || '个人数字名片') + ' - 数字名片';
+
+        document.title = (name || theme.badge) + ' - 数字名片';
     }
 </script>
 </body>
