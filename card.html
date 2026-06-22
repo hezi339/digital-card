@@ -100,15 +100,16 @@
             border-radius: 8px;
         }
         .voice-fallback {
-            display: inline-block;
+            display: block;
             margin-top: 10px;
-            padding: 10px 14px;
+            padding: 14px 16px;
             background: #e3f2fd;
             color: #1565C0;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 10px;
+            font-size: 15px;
             text-decoration: none;
             font-weight: 600;
+            text-align: center;
         }
         .empty-tip {
             text-align: center;
@@ -176,8 +177,8 @@
         </div>
         <div class="section-block" id="voiceWrap" style="display:none;">
             <div class="section-label">🎙 语音介绍</div>
-            <audio class="voice-player" id="voicePlayer" controls preload="metadata" playsinline webkit-playsinline></audio>
-            <a class="voice-fallback" id="voiceFallbackLink" href="#" style="display:none;">🔗 微信内无法播放？点此直接收听</a>
+            <audio class="voice-player" id="voicePlayer" controls preload="metadata" playsinline webkit-playsinline style="display:none;"></audio>
+            <a class="voice-fallback" id="voiceFallbackLink" href="https://hezi339.github.io/digital-card/voice/intro.mp3">🔗 点击播放语音介绍</a>
         </div>
         <div class="section-block" id="bioWrap" style="display:none;">
             <div class="section-label" id="bioLabel">简介</div>
@@ -228,9 +229,12 @@
         return true;
     }
 
+    /** 已部署且验证可播的语音直链（与 GitHub voice/intro.mp3 一致） */
+    var DEFAULT_VOICE_URL = 'https://hezi339.github.io/digital-card/voice/intro.mp3';
+
     /** 解析语音地址：支持完整 https 或相对路径 voice/intro.mp3 */
     function resolveVoiceUrl(voice) {
-        if (!voice) return '';
+        if (!voice) return DEFAULT_VOICE_URL;
         if (voice.indexOf('http://') === 0 || voice.indexOf('https://') === 0) {
             return voice;
         }
@@ -239,8 +243,42 @@
         return base + voice.replace(/^\//, '');
     }
 
+    /** URL 参数缺失或旧文件名（含 _tmp）时，回退到 intro.mp3 */
+    function normalizeVoiceUrl(voice) {
+        if (!voice || voice.indexOf('_tmp') !== -1) {
+            return DEFAULT_VOICE_URL;
+        }
+        return resolveVoiceUrl(voice);
+    }
+
     function isWeChatBrowser() {
         return /MicroMessenger/i.test(navigator.userAgent || '');
+    }
+
+    function setupVoiceSection(voiceUrl) {
+        showBlock('voiceWrap');
+        var url = voiceUrl || DEFAULT_VOICE_URL;
+        var voiceEl = document.getElementById('voicePlayer');
+        var fallback = document.getElementById('voiceFallbackLink');
+        if (fallback) {
+            fallback.href = url;
+            fallback.style.display = 'block';
+        }
+        if (isWeChatBrowser()) {
+            if (voiceEl) voiceEl.style.display = 'none';
+            return;
+        }
+        if (voiceEl) {
+            voiceEl.style.display = 'block';
+            voiceEl.src = url;
+            voiceEl.onerror = function() {
+                voiceEl.style.display = 'none';
+                if (fallback) {
+                    fallback.href = DEFAULT_VOICE_URL;
+                    fallback.textContent = '🔗 点此播放语音介绍';
+                }
+            };
+        }
     }
 
     // 【H5-主题配置】按 purpose 参数切换渐变/badge/标签文案
@@ -397,30 +435,8 @@
             document.getElementById('favoriteCharacter').textContent = favoriteCharacter;
         }
 
-        if (voice) {
-            showBlock('voiceWrap');
-            var voiceUrl = resolveVoiceUrl(voice);
-            var voiceEl = document.getElementById('voicePlayer');
-            var fallback = document.getElementById('voiceFallbackLink');
-            if (fallback) {
-                fallback.href = voiceUrl;
-                fallback.style.display = 'block';
-                fallback.textContent = '🔗 点击播放语音介绍';
-            }
-            // 微信内置浏览器对 <audio> 兼容性差，优先用直链打开（与浏览器直接访问 mp3 相同）
-            if (isWeChatBrowser()) {
-                voiceEl.style.display = 'none';
-            } else {
-                voiceEl.style.display = 'block';
-                voiceEl.src = voiceUrl;
-                voiceEl.onerror = function() {
-                    voiceEl.style.display = 'none';
-                    if (fallback) {
-                        fallback.textContent = '🔗 播放器失败，点此直接收听';
-                    }
-                };
-            }
-        }
+        // 语音：默认 intro.mp3；微信内仅显示直链按钮（避免 audio 报错）
+        setupVoiceSection(normalizeVoiceUrl(voice));
 
         if (bio) {
             showBlock('bioWrap');
