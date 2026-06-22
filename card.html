@@ -92,6 +92,11 @@
         .section-block {
             margin-bottom: 14px;
         }
+        .voice-player {
+            width: 100%;
+            margin-top: 8px;
+            border-radius: 8px;
+        }
         .empty-tip {
             text-align: center;
             color: #9e9e9e;
@@ -155,6 +160,10 @@
         <div class="section-block" id="favoriteWrap" style="display:none;">
             <div class="section-label">💖 本命 / 推</div>
             <div class="bio" id="favoriteCharacter"></div>
+        </div>
+        <div class="section-block" id="voiceWrap" style="display:none;">
+            <div class="section-label">🎙 语音介绍</div>
+            <audio class="voice-player" id="voicePlayer" controls preload="none"></audio>
         </div>
         <div class="section-block" id="bioWrap" style="display:none;">
             <div class="section-label" id="bioLabel">简介</div>
@@ -275,11 +284,12 @@
     var playingGames = getParam('playingGames');
     var favoriteCharacter = getParam('favoriteCharacter');
     var qq = getParam('qq');
+    var voice = getParam('voice');
     var purpose = getParam('purpose') || 'general';
     var theme = purposeThemes[purpose] || purposeThemes.general;
 
     var hasContent = name || title || phone || email || company || bio || interests
-        || portfolio || skills || resume || watchingAnime || playingGames || favoriteCharacter || qq;
+        || portfolio || skills || resume || watchingAnime || playingGames || favoriteCharacter || qq || voice;
 
     document.body.style.background = theme.gradient;
     document.querySelector('.header').style.background = theme.gradient;
@@ -352,6 +362,12 @@
         if (favoriteCharacter) {
             showBlock('favoriteWrap');
             document.getElementById('favoriteCharacter').textContent = favoriteCharacter;
+        }
+
+        if (voice) {
+            showBlock('voiceWrap');
+            var voiceEl = document.getElementById('voicePlayer');
+            voiceEl.src = voice;
         }
 
         if (bio) {
