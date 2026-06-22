@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- 【H5 网页名片】GitHub Pages 部署 | URL 参数由 QrUrlBuilder.java 生成 -->
+<!-- 答辩定位：Ctrl+F 搜索 【H5-】 -->
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -97,6 +99,17 @@
             margin-top: 8px;
             border-radius: 8px;
         }
+        .voice-fallback {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 14px;
+            background: #e3f2fd;
+            color: #1565C0;
+            border-radius: 8px;
+            font-size: 14px;
+            text-decoration: none;
+            font-weight: 600;
+        }
         .empty-tip {
             text-align: center;
             color: #9e9e9e;
@@ -163,7 +176,8 @@
         </div>
         <div class="section-block" id="voiceWrap" style="display:none;">
             <div class="section-label">🎙 语音介绍</div>
-            <audio class="voice-player" id="voicePlayer" controls preload="none"></audio>
+            <audio class="voice-player" id="voicePlayer" controls preload="metadata" playsinline webkit-playsinline></audio>
+            <a class="voice-fallback" id="voiceFallbackLink" href="#" style="display:none;">🔗 微信内无法播放？点此直接收听</a>
         </div>
         <div class="section-block" id="bioWrap" style="display:none;">
             <div class="section-label" id="bioLabel">简介</div>
@@ -175,6 +189,7 @@
 <div class="footer" id="footerText">个人数字名片 · 微信扫码查看</div>
 
 <script>
+    // 【H5-工具函数】读取 URL 查询参数（与 QrUrlBuilder 拼参对应）
     function getParam(key) {
         var params = new URLSearchParams(window.location.search);
         var value = params.get(key);
@@ -213,6 +228,7 @@
         return true;
     }
 
+    // 【H5-主题配置】按 purpose 参数切换渐变/badge/标签文案
     var purposeThemes = {
         general: {
             gradient: 'linear-gradient(135deg, #1565C0 0%, #42A5F5 100%)',
@@ -270,6 +286,7 @@
         }
     };
 
+    // 【H5-数据读取】从 URL 解析全部名片字段（voice= 为语音直链）
     var name = getParam('name');
     var title = getParam('title');
     var phone = getParam('phone');
@@ -299,6 +316,7 @@
     document.getElementById('interestsLabel').textContent = theme.interestsLabel;
     document.getElementById('footerText').textContent = theme.footer;
 
+    // 【H5-渲染逻辑】有参数即展示；语音区使用 <audio> 播放公网 mp3/m4a
     if (!hasContent) {
         document.getElementById('emptyTip').style.display = 'block';
     } else {
@@ -368,6 +386,11 @@
             showBlock('voiceWrap');
             var voiceEl = document.getElementById('voicePlayer');
             voiceEl.src = voice;
+            var fallback = document.getElementById('voiceFallbackLink');
+            if (fallback) {
+                fallback.href = voice;
+                fallback.style.display = 'inline-block';
+            }
         }
 
         if (bio) {
