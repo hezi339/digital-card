@@ -228,6 +228,21 @@
         return true;
     }
 
+    /** 解析语音地址：支持完整 https 或相对路径 voice/intro.mp3 */
+    function resolveVoiceUrl(voice) {
+        if (!voice) return '';
+        if (voice.indexOf('http://') === 0 || voice.indexOf('https://') === 0) {
+            return voice;
+        }
+        var pageUrl = window.location.href.split('?')[0];
+        var base = pageUrl.substring(0, pageUrl.lastIndexOf('/') + 1);
+        return base + voice.replace(/^\//, '');
+    }
+
+    function isWeChatBrowser() {
+        return /MicroMessenger/i.test(navigator.userAgent || '');
+    }
+
     // 【H5-主题配置】按 purpose 参数切换渐变/badge/标签文案
     var purposeThemes = {
         general: {
@@ -384,12 +399,26 @@
 
         if (voice) {
             showBlock('voiceWrap');
+            var voiceUrl = resolveVoiceUrl(voice);
             var voiceEl = document.getElementById('voicePlayer');
-            voiceEl.src = voice;
             var fallback = document.getElementById('voiceFallbackLink');
             if (fallback) {
-                fallback.href = voice;
-                fallback.style.display = 'inline-block';
+                fallback.href = voiceUrl;
+                fallback.style.display = 'block';
+                fallback.textContent = '🔗 点击播放语音介绍';
+            }
+            // 微信内置浏览器对 <audio> 兼容性差，优先用直链打开（与浏览器直接访问 mp3 相同）
+            if (isWeChatBrowser()) {
+                voiceEl.style.display = 'none';
+            } else {
+                voiceEl.style.display = 'block';
+                voiceEl.src = voiceUrl;
+                voiceEl.onerror = function() {
+                    voiceEl.style.display = 'none';
+                    if (fallback) {
+                        fallback.textContent = '🔗 播放器失败，点此直接收听';
+                    }
+                };
             }
         }
 
